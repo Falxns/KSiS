@@ -23,7 +23,7 @@ public class Server {
             System.out.println("Server is running.");
             while (true) {
                 clientSocket = serverSocket.accept();
-                ClientHandler client = new ClientHandler(clientSocket, this);
+                ClientHandler client = new ClientHandler(clientSocket);
                 clients.add(client);
             }
         }
@@ -43,12 +43,6 @@ public class Server {
             catch (IOException ex) {
                 ex.printStackTrace();
             }
-        }
-    }
-
-    public void sendMessageToAllClients(String msg, int from, int to, int type) {
-        for (ClientHandler client : clients) {
-            client.sendMsg(msg, from, to, type);
         }
     }
 }

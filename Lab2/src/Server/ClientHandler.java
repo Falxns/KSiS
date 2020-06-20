@@ -1,29 +1,27 @@
 package Server;
 
-import Server.*;
 import java.io.*;
 import java.net.Socket;
 
 public class ClientHandler extends Thread{
-    private Server server;
+    private Socket clientSocket = null;
     private ObjectOutputStream outMessage;
     private BufferedReader bufferedReader;
     private ObjectInputStream inMessage;
     private boolean isClose = false;
-    private Socket clientSocket = null;
 
-    public ClientHandler(Socket socket, Server server) {
+    public ClientHandler(Socket socket) {
         try {
-            this.server = server;
             this.clientSocket = socket;
             this.outMessage = new ObjectOutputStream(socket.getOutputStream());
             this.inMessage = new ObjectInputStream(socket.getInputStream());
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             for (String msg : Server.messageList) {
-                sendMsg(msg,0,0,0);
+                sendMsg(msg,0,0,0,"");
+                //add files later
             }
             for (String member : Server.clientsNameList) {
-                sendMsg(member,0,0,1);
+                sendMsg(member,0,0,1,"");
             }
             start();
         } catch (IOException ex) {
@@ -42,27 +40,27 @@ public class ClientHandler extends Thread{
                         case 0:
                             if (clientMessage.to == 0) {
                                 Server.messageList.add(clientMessage.msg);
-                                server.sendMessageToAllClients(clientMessage.msg,clientMessage.from,0,0);
+                                sendMessageToAllClients(clientMessage.msg,clientMessage.from,0,0, clientMessage.files);
                             } else {
-                                Server.clients.get(clientMessage.to - 1).sendMsg(clientMessage.msg,clientMessage.from,clientMessage.to,0);
+                                Server.clients.get(clientMessage.to - 1).sendMsg(clientMessage.msg,clientMessage.from,clientMessage.to,0, clientMessage.files);
                                 if (clientMessage.to != clientMessage.from) {
-                                    Server.clients.get(clientMessage.from - 1).sendMsg(clientMessage.msg,clientMessage.to,clientMessage.from,0);
+                                    Server.clients.get(clientMessage.from - 1).sendMsg(clientMessage.msg,clientMessage.to,clientMessage.from,0, clientMessage.files);
                                 }
                             }
                             break;
                         case 1:
                             Server.clientsNameList.add(clientMessage.msg);
-                            server.sendMessageToAllClients(clientMessage.msg,0,0,1);
+                            sendMessageToAllClients(clientMessage.msg,0,0,1,"");
                             break;
                         case 2:
-                            server.sendMessageToAllClients("",clientMessage.from,0,2);
+                            sendMessageToAllClients("",clientMessage.from,0,2,"");
                             this.close();
                             break;
                         default:
                             System.out.println("Unknown command.");
                     }
                 }
-                Thread.sleep(100);
+                sleep(100);
             }
         }
         catch (InterruptedException | IOException | NullPointerException | ClassNotFoundException ex) {
@@ -71,15 +69,21 @@ public class ClientHandler extends Thread{
         }
     }
 
-    public void sendMsg(String msg, int from, int to, int type) {
+    public void sendMsg(String msg, int from, int to, int type, String files) {
         try {
             if (!clientSocket.isClosed()) {
-                Message message = new Message(msg, from, to, type);
+                Message message = new Message(msg, from, to, type, files);
                 outMessage.writeObject(message);
                 outMessage.flush();
             }
         } catch (Exception ex) {
             System.out.println("Client lost connection with server.");
+        }
+    }
+
+    public void sendMessageToAllClients(String msg, int from, int to, int type, String files) {
+        for (ClientHandler client : Server.clients) {
+            client.sendMsg(msg, from, to, type, files);
         }
     }
 

@@ -1,5 +1,6 @@
 package Client;
 
+import Client.StorageManager.StorageFile;
 import Server.Message;
 import Server.Server;
 import javafx.application.Platform;
@@ -19,6 +20,7 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Client {
@@ -39,13 +41,14 @@ public class Client {
                     break;
                 if (bufferedReader.ready()) {
                     Message answer = (Message) inMessage.readObject();
-                    System.out.println(answer.msg);
+                    LinkedList<StorageFile> filesList = chat.parseFilesFromString(answer.files);
+                    System.out.println(answer.msg + "  " + answer.files);
                     switch (answer.type) {
                         case 0:
                             if (answer.to != 0) {
-                                chat.addMsg(answer.msg, answer.from);
+                                chat.addMsg(answer.msg, answer.from, filesList);
                             } else {
-                                chat.addMsg(answer.msg, 0);
+                                chat.addMsg(answer.msg, 0, filesList);
                             }
                             break;
                         case 1:
@@ -106,7 +109,7 @@ public class Client {
         }).start();
 
         try {
-            Message message = new Message(clientName, 0, 0, 1);
+            Message message = new Message(clientName, 0, 0, 1, "");
             outMessage.writeObject(message);
             outMessage.flush();
         } catch (IOException e) {
@@ -115,7 +118,7 @@ public class Client {
         }
     }
 
-    public void sendMsg(String msg, int from, int to, int type) throws IOException {
+    public void sendMsg(String msg, int from, int to, int type, String files) {
         Date time;
         String dtime;
         SimpleDateFormat dt1;
@@ -123,7 +126,8 @@ public class Client {
             time = new Date();
             dt1 = new SimpleDateFormat("HH:mm:ss");
             dtime = dt1.format(time);
-            Message message = new Message("(" + dtime + ")" + clientName + ": " + msg, from, to, type);
+            //maybe fix this IP
+            Message message = new Message("(" + dtime + ")" + clientName + " " + clientSocket.getLocalAddress().toString() + ": " + msg, from, to, type, files);
             outMessage.writeObject(message);
             outMessage.flush();
         } catch (IOException e) {
@@ -136,7 +140,7 @@ public class Client {
             if (!clientSocket.isClosed()) {
                 System.out.println("Exit");
                 isClose = true;
-                sendMsg("", 0, 0, 2);
+                sendMsg("", 0, 0, 2, "");
                 clientSocket.close();
                 inMessage.close();
                 outMessage.close();

@@ -35,9 +35,9 @@ public class Login extends Frame implements WindowListener {
         add(login);
         add(joinBtn);
 
-        this.setSize(300, 150);
+        this.setSize(300, 100);
         this.setVisible(true);
-        this.setTitle("Lab-2");
+        this.setTitle("Lab2");
     }
 
     @Override
