@@ -6,19 +6,9 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-public class Main extends Application {
-
-    @Override
-    public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(getClass().getResource("Login.fxml"));
-        primaryStage.setTitle("Lab2");
-        primaryStage.setScene(new Scene(root, 320, 150));
-        primaryStage.show();
-    }
-
+public class Main {
 
     public static void main(String[] args) {
-        Client client = new Client();
-        launch(args);
+        new Login();
     }
 }

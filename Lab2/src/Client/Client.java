@@ -1,6 +1,7 @@
 package Client;
 
 import Server.Message;
+import Server.Server;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -16,6 +17,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 public class Client {
@@ -27,69 +30,42 @@ public class Client {
     private static boolean isExit = false;
     public static boolean isClose = false;
     public static String clientName;
-
-    @FXML
-    private TextField login;
-
-    @FXML
-    public void logIn() throws IOException {
-        clientName = login.getText();
-        sendMsg();
-    }
-
-    public void startGame() throws Exception{
-        Stage tempStage = (Stage) login.getScene().getWindow();
-        tempStage.hide();
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("Chat.fxml"));
-        Parent root = (Parent) loader.load();
-        //controller = loader.getController();
-        Stage primaryStage = new Stage();
-        primaryStage.setTitle("Chat");
-        Scene scene = new Scene(root, 400, 600);
-        primaryStage.setScene(scene);
-        primaryStage.setOnCloseRequest(windowEvent -> {
-            isClose = true;
-            primaryStage.close();
-        });
-        //controller.initialize();
-        primaryStage.show();
-    }
+    private Chat chat;
 
     public void clientWork() throws Exception{
-        while (true) {
-            if (isExit)
-                break;
-            if (bufferedReader.ready()) {
-                Message answer = (Message) inMessage.readObject();
-                System.out.println(answer.msg);
-//                if (answer.msg.equals("start")) {
-//                    Platform.runLater(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            try {
-//                                startGame();
-//                            } catch (Exception e) {
-//                                e.printStackTrace();
-//                            }
-//                        }
-//                    });
-//                }
-//                if (answer.msg.equals("lobbies")) {
-//
-//                }
+        try {
+            while (true) {
+                if (isExit || isClose)
+                    break;
+                if (bufferedReader.ready()) {
+                    Message answer = (Message) inMessage.readObject();
+                    System.out.println(answer.msg);
+                    switch (answer.type) {
+                        case 0:
+                            if (answer.to != 0) {
+                                chat.addMsg(answer.msg, answer.from);
+                            } else {
+                                chat.addMsg(answer.msg, 0);
+                            }
+                            break;
+                        case 1:
+                            chat.addChat(answer.msg);
+                            break;
+                        case 2:
+                            chat.deleteChat(answer.from);
+                            break;
+                        default:
+                            System.err.println("Unknown command.");
+                    }
+                }
             }
-            if (isClose){
-                sendMsg(,,,);
-                outMessage.close();
-                inMessage.close();
-                clientSocket.close();
-                isExit = true;
-                break;
-            }
+        } catch (IOException ex) {
+            close();
         }
     }
 
-    public Client(){
+    public Client(String name){
+        clientName = name;
         try {
             byte[] buf = new byte[4];
             if (!isExit) {
@@ -108,11 +84,14 @@ public class Client {
                 inMessage = new ObjectInputStream(clientSocket.getInputStream());
                 bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 outMessage = new ObjectOutputStream(clientSocket.getOutputStream());
+
             }
         } catch (IOException e) {
             System.out.println("Can't connect to server, check network connection.");
+            close();
         }
 
+        chat = new Chat(this);
 
         new Thread(new Runnable() {
             @Override
@@ -121,15 +100,47 @@ public class Client {
                     clientWork();
                 } catch (Exception e) {
                     System.out.println("Client lost the connection.");
+                    close();
                 }
             }
         }).start();
 
+        try {
+            Message message = new Message(clientName, 0, 0, 1);
+            outMessage.writeObject(message);
+            outMessage.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            close();
+        }
     }
 
-    private void sendMsg(String msg, int from, int to, int type) throws IOException {
-        Message message = new Message(msg, from, to, type);
-        outMessage.writeObject(message);
-        outMessage.flush();
+    public void sendMsg(String msg, int from, int to, int type) throws IOException {
+        Date time;
+        String dtime;
+        SimpleDateFormat dt1;
+        try {
+            time = new Date();
+            dt1 = new SimpleDateFormat("HH:mm:ss");
+            dtime = dt1.format(time);
+            Message message = new Message("(" + dtime + ")" + clientName + ": " + msg, from, to, type);
+            outMessage.writeObject(message);
+            outMessage.flush();
+        } catch (IOException e) {
+            close();
+        }
+    }
+
+    public void close() {
+        try {
+            if (!clientSocket.isClosed()) {
+                System.out.println("Exit");
+                isClose = true;
+                sendMsg("", 0, 0, 2);
+                clientSocket.close();
+                inMessage.close();
+                outMessage.close();
+            }
+        } catch (IOException ignored) {}
     }
 }

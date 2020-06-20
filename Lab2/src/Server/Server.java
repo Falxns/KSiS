@@ -25,7 +25,6 @@ public class Server {
                 clientSocket = serverSocket.accept();
                 ClientHandler client = new ClientHandler(clientSocket, this);
                 clients.add(client);
-                new Thread(client).start();
             }
         }
         catch (IOException ex) {
@@ -51,9 +50,5 @@ public class Server {
         for (ClientHandler client : clients) {
             client.sendMsg(msg, from, to, type);
         }
-    }
-
-    public void removeClient(ClientHandler client) {
-        clients.remove(client);
     }
 }
