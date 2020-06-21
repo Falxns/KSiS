@@ -14,7 +14,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class StorageManager {
-    final String API_URL = "http://192.168.100.2:7777/Files/";
+    final String API_URL = "http://192.168.100.4:7777/Files/";
     private final String[] forbiddenExtensions = {".exe", ".jar"};
     private int operationsInProgress = 0;
     public final int fileSizeLimitMB = 20;

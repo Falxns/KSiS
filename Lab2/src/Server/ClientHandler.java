@@ -17,8 +17,7 @@ public class ClientHandler extends Thread{
             this.inMessage = new ObjectInputStream(socket.getInputStream());
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             for (String msg : Server.messageList) {
-                sendMsg(msg,0,0,0,"");
-                //add files later
+                sendMsg(msg,0,0,0,Server.filesInMsgList.get(Server.messageList.indexOf(msg)));
             }
             for (String member : Server.clientsNameList) {
                 sendMsg(member,0,0,1,"");
@@ -40,6 +39,7 @@ public class ClientHandler extends Thread{
                         case 0:
                             if (clientMessage.to == 0) {
                                 Server.messageList.add(clientMessage.msg);
+                                Server.filesInMsgList.add(clientMessage.files);
                                 sendMessageToAllClients(clientMessage.msg,clientMessage.from,0,0, clientMessage.files);
                             } else {
                                 Server.clients.get(clientMessage.to - 1).sendMsg(clientMessage.msg,clientMessage.from,clientMessage.to,0, clientMessage.files);

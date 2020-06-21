@@ -25,7 +25,7 @@ public class UDPMessage extends Thread {
     {
         try
         {
-            datagramSocket = new DatagramSocket(7777);
+            datagramSocket = new DatagramSocket(8888);
             System.out.println("UDP server is running.");
             while(isRunning)
             {

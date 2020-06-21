@@ -11,6 +11,7 @@ public class Server {
     static final int PORT = 1488;
     private static UDPMessage connectionListener;
     public static LinkedList<String> messageList = new LinkedList<>();
+    public static LinkedList<String> filesInMsgList = new LinkedList<>();
     public static LinkedList<String> clientsNameList = new LinkedList<>();
     public static ObservableList<ClientHandler> clients = FXCollections.observableArrayList();
 

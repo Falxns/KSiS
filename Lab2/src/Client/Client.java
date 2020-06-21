@@ -72,7 +72,7 @@ public class Client {
         try {
             byte[] buf = new byte[4];
             if (!isExit) {
-                DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, InetAddress.getByName("192.168.100.255"), 7777);
+                DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, InetAddress.getByName("192.168.100.255"), 8888);
                 DatagramSocket datagramSocket = new DatagramSocket();
                 datagramSocket.send(datagramPacket);
                 datagramSocket.receive(datagramPacket);
@@ -126,7 +126,6 @@ public class Client {
             time = new Date();
             dt1 = new SimpleDateFormat("HH:mm:ss");
             dtime = dt1.format(time);
-            //maybe fix this IP
             Message message = new Message("(" + dtime + ")" + clientName + " " + clientSocket.getLocalAddress().toString() + ": " + msg, from, to, type, files);
             outMessage.writeObject(message);
             outMessage.flush();
